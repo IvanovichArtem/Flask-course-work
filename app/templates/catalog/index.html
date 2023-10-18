@@ -1,0 +1,116 @@
+{% extends "catalog/base.html" %}
+
+    {% block title %} 
+      <title>
+        {{ context.title }}
+      </title>
+    {% endblock title %} 
+    
+
+   
+      {% block carousel %}
+      
+        <div class="container-fluid my-carousel">
+          <div id="carouselExampleIndicators" class="carousel slide carousel-fade"
+            data-bs-ride="carousel" data-bs-interval="4000">
+            <div class="carousel-indicators">
+              <button type="button" data-bs-target="#carouselExampleIndicators"
+                data-bs-slide-to="0" class="active" aria-current="true"
+                aria-label="Slide 1"></button>
+              <button type="button" data-bs-target="#carouselExampleIndicators"
+                data-bs-slide-to="1" aria-label="Slide 2"></button>
+              <button type="button" data-bs-target="#carouselExampleIndicators"
+                data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <img src={{url_for('static', filename='img/slider/slider_1.jpg')}}
+                  class="d-block w-100"
+                  alt="...">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="slide-text">Встречайте историю</h5>
+                </div>
+              </div>
+              <div class="carousel-item">
+                <img src={{url_for('static', filename='img/slider/slider_2.jpg')}}
+                  class="d-block w-100"
+                  alt="...">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="slide-text">Мраморные Истории: Античные Скульптуры в
+                    Новом
+                    Свете</h5>
+                </div>
+              </div>
+              <div class="carousel-item">
+                <img src={{url_for('static', filename='img/slider/slider_3.jpg')}}
+                  class="d-block w-100"
+                  alt="...">
+                <div class="carousel-caption d-none d-md-block">
+                  <h5 class="slide-text">Путешествие в Мир Глиняных Шедевров</h5>
+                </div>
+              </div>
+            </div>
+            <button class="carousel-control-prev" type="button"
+              data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button"
+              data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </div>
+
+      {% endblock carousel %}
+
+      
+      {% block text %}
+      
+        <div id="text">
+          <br>
+          <h2>Добро пожаловать в Минский Музей Исскуств и Культуры</h2>
+          <br>
+          <p>
+            Здесь, среди бесконечных просторов истории, в сердце Минска,
+            раскрывается уникальная сокровищница искусства
+            и культуры. Мы приглашаем вас на невероятное
+            путешествие в прошлое и настоящее,
+            где каждый экспонат — это маленькая часть
+            удивительного мозаичного полотна человеческой души
+            и творчества.
+          </p>
+          <br>
+          <img class="about-img" src={{url_for('static', filename='img/index/museum_1.jfif')}}>
+          <br>
+          <br>
+          <h2>Выставки и события</h2>
+          <br>
+          <p>
+            В течение года мы организуем множество
+            интересных мероприятий, от выставок
+            и мастер-классов до культурных
+            фестивалей. Посетите наш раздел
+            <span style='font-weight: 700;'>Выставки</span> и
+            <span style='font-weight: 700;'>События</span>
+            , чтобы быть в курсе
+            всех предстоящих событий
+            и текущих выставок.
+          </p>
+          <br>
+          <img class="about-img" src={{url_for('static', filename='img/index/museum_2.jfif')}}>
+          <br>
+          <br>
+          <h2>Как добраться</h2>
+          <br>
+          <p>
+            Музей расположен в центре Минска, по
+            адресу: пр. Независимости, 25. Подробные инструкции о том,
+            как доехать и связаться с нами, вы найдете в разделе
+            <span style='font-weight: 700;'>Контакты</span>.
+          </p>
+          <br>
+        </div>
+
+      {% endblock text %}

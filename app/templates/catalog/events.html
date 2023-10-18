@@ -1,0 +1,72 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}
+<title>{{ context.title }}</title>
+{% endblock title %}
+
+
+{% block text %}
+<div class="row justify-content-center">
+        <h1>{{ context.title }}</h2>
+        {% for event in events %}
+        <div class="col-lg-5 col-md-6 mb-4">
+            <div class="card h-100">
+                <img class="card-img-top"
+                    src={{event.img.url}}
+                    alt="">
+                <div class="card-body">
+                    <h4 class="card-title">
+                        <p>{{event.name}}</p> <p>{{event.age_limit}}+</p>
+                    </h4>
+                    <h5>
+                        {% if event.price == 0 %}
+                            Бесплатно!!!
+                        {% else %}
+                            {{event.price }} руб.
+                        {% endif %}
+                    </h5>
+                    <p class="card-text">{{event.description}}</p>
+                </div>
+                <div class="card-footer text-center">
+                    <a class="btn btn-outline-success"
+                    href={% url "catalog:basket_add" event.id %}>
+                        Купить билет
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class='d-flex justify-content-center'>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                <li class="page-item {% if not events.has_previous %} disabled {% endif %}">
+                    <a class="page-link" href=
+                    {% if events.has_previous %} 
+                        {% url "catalog:event_paginator" events.previous_page_number %} 
+                    {% else %}
+                        '#' 
+                    {% endif %}>
+                    Предыдущая
+                </a>
+                {% for page in events.paginator.page_range %}
+                </li>
+                    <li class="page-item"><a class="page-link" href={% url "catalog:event_paginator" page %}>
+                        {{ page }}
+                    </a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if not events.has_next %} disabled {% endif %}">
+                    <a class="page-link" href=
+                        {% if events.has_next %} 
+                            {% url "catalog:event_paginator" events.next_page_number %} 
+                        {% else %}
+                            '#' 
+                        {% endif %}>
+                        Следующая
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+{% endblock text %}

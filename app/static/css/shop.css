@@ -1,0 +1,70 @@
+.nav-link {
+    font-size: 18pt;
+    color: black;
+    font-family: "Muli";
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+    opacity: 1;
+    color: black;
+}
+
+.navbar {
+    height: 90px;
+}
+
+.content {
+    height: calc(57.1vh);
+}
+
+.nav-item {
+    padding-left: 20pt;
+    padding-right: 20pt;
+}
+
+.slide-text {
+    font-size: 25pt;
+}
+
+.icon {
+    height: 30px;
+    width: 30px;
+}
+
+.logo {
+    height: 70px;
+    width: 70px;
+}
+
+hr {
+    position: relative;
+    border: none;
+    height: 15px;
+    background: rgb(255, 0, 0);
+}
+
+#text {
+    margin-left: 80px;
+    width: 1000px;
+}
+
+#text h2 {
+    font-size: 30pt;
+}
+
+#text p {
+    font-size: 16pt;
+}
+
+.about-img {
+    width: 800px;
+}
+
+.row {
+    margin-left: 50px;
+}
+
+.text-bold {
+    font-size: 32px;
+}
