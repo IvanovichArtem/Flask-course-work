@@ -13,8 +13,14 @@ class Database:
         self.cursor.execute(f"SELECT * FROM {table_name}")
         fetch = self.cursor.fetchall()
         return fetch 
+    
+    def filter(self, table_name, filter_conditions="TRUE"):
+        self.cursor.execute(f"SELECT * FROM {table_name} WHERE {filter_conditions}")
+        fetch = self.cursor.fetchall()
+
+        return fetch
 
 
 if __name__ == "__main__":
     db = Database(db_name="flask_museum", user="admin", password="root")
-    db.all("catalog_exhibition")
+    db.filter("catalog_exhibition", "type_id=2")

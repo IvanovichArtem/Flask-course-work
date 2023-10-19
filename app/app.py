@@ -26,12 +26,20 @@ def contacts():
 def exhibitions():
     context = {
         'title': 'Выставки',
-        'exhibitions': db.all('catalog_exhibition')
+        'exhibitions': db.filter('catalog_exhibition', 'type_id=1')
     }
     return render_template("catalog/exhibition.html", context=context)
+
+@app.route("/events")
+def events():
+    context = {
+        'title': 'Выставки',
+        'events': db.filter('catalog_exhibition', 'type_id=2')
+    }
+    return render_template("catalog/events.html", context=context)
+
 
 
 if __name__ == "__main__":
     db = Database(db_name="flask_museum", user="admin", password="root")
-    
     app.run(debug=True)
