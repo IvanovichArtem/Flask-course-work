@@ -1,5 +1,4 @@
 {% extends "catalog/base.html" %}
-{% load static %}
 
 {% block title %}
 <title>{{ title }}</title>
@@ -8,12 +7,12 @@
 
 {% block text %}
 <div class="row justify-content-center">
-    <h1>{{ title }}</h1>
-        {% for exhibit in exhibitions %}
+    <h1>{{ context.title }}</h1>
+        {% for exhibit in context.exhibitions %}
         <div class="col-lg-5 col-md-6 mb-4">
             <div class="card h-100">
                     <img class="card-img-top"
-                        src={{exhibit.img.url}}
+                        src="{{ url_for('static', filename='media/'+exhibit.img) }}"
                         alt="">
                 <div class="card-body">
                     <h4 class="card-title">
@@ -30,45 +29,13 @@
                 </div>
                 <div class="card-footer text-center">
                     <a class="btn btn-outline-success"
-                    href={% url "catalog:basket_add" exhibit.id %}>
+                    href=''>
                         Купить билет
                     </a>
                 </div>
             </div>
         </div>
         {% endfor %}
-    </div>
-    <div class='d-flex justify-content-center'>
-        <nav aria-label="Page navigation example">
-            <ul class="pagination">
-                <li class="page-item {% if not exhibitions.has_previous %} disabled {% endif %}">
-                    <a class="page-link" href=
-                    {% if exhibitions.has_previous %} 
-                        {% url "catalog:exhibition_paginator" exhibitions.previous_page_number %} 
-                    {% else %}
-                        '#' 
-                    {% endif %}>
-                    Предыдущая
-                </a>
-                {% for page in exhibitions.paginator.page_range %}
-                </li>
-                    <li class="page-item"><a class="page-link" href={% url "catalog:exhibition_paginator" page %}>
-                        {{ page }}
-                    </a>
-                </li>
-                {% endfor %}
-                <li class="page-item {% if not exhibitions.has_next %} disabled {% endif %}">
-                    <a class="page-link" href=
-                        {% if exhibitions.has_next %} 
-                            {% url "catalog:exhibition_paginator" exhibitions.next_page_number %} 
-                        {% else %}
-                            '#' 
-                        {% endif %}>
-                        Следующая
-                    </a>
-                </li>
-            </ul>
-        </nav>
     </div>
     
 {% endblock text %}
