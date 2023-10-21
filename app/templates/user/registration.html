@@ -1,0 +1,55 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link href={% static "css/bootstrap.min.css" %} rel="stylesheet">
+    <link href={% static "css/registration.css" %} rel="stylesheet">
+</head>
+<body>
+    <form action={% url "user:registration" %} method='post'>
+      {% csrf_token %}
+        <div class="container">
+          <h1>Регистрация</h1>
+          <p>Пожалуйста заполните форму, чтобы создать аккаунт</p>
+          <hr>
+          
+          <label for="form.first_name.id_for_label"><b>Имя</b></label>
+          {{ form.first_name }}
+          
+          <label for="form.last_name.id_for_label"><b>Фамилию</b></label>
+          {{ form.last_name}}
+          
+          <label for="form.username.id_for_label"><b>Имя аккаунта</b></label>
+          {{ form.username }}
+          
+          <label for="form.email.id_for_label"><b>E-mail</b></label>
+          {{ form.email }}
+          
+          <label for="form.password1.id_for_label"><b>Пароль</b></label>
+          {{ form.password1 }}
+          
+          <label for="form.password2.id_for_label"><b>Повторите пароль</b></label>
+          {{ form.password2 }}
+          
+          {% if form.errors %}
+            <br><br><p>
+              {{ form.errors }}
+            </p><br>
+          {% endif %}
+          <hr>
+          <button type="submit" class="registerbtn">Зарегестрироваться</button>
+        </div>
+        
+        <div class="container signin">
+          <p>Уже есть аккаунт? <a href={% url "user:login" %}>Войти</a>.</p>
+          <a href={% url "catalog:home" %}><p>Вернуться</p></a>
+        </div>
+      </form>
+      
+    <script src={% static "js/bootstrap.bundle.min.js" %} ></script>
+</body>
+</html>

@@ -21,10 +21,22 @@
                   <a class="nav-link" aria-current="page" href=>Магазин</a>
               </div>
           </div>
-          <div class="col-md-3">
-            <a class="btn btn-outline-dark me-2" href= role="button">Войти</a>
-            <a class="btn btn-dark" href= role="button">Зарегестрироваться</a>
-          </div>
+          {% if session.logged_in %}
+          
+            <div class="col-md-3">
+              <a class="btn btn-outline-dark me-2" href={{url_for('profile')}} role="button">Профиль</a>
+              <a class="btn btn-dark" href={{url_for('logout')}} role="button">Выйти</a>
+            </div>
+
+          {% else %}
+
+            <div class="col-md-3">
+              <a class="btn btn-outline-dark me-2" href={{url_for('login')}} role="button">Войти</a>
+              <a class="btn btn-dark" href= role="button">Зарегестрироваться</a>
+            </div>
+
+          {% endif %}
+
       </div>
     </nav>
     <hr>

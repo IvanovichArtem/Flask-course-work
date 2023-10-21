@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в аккаунт</title>
+    <link href={{url_for('static', filename='css/bootstrap.min.css')}} rel="stylesheet">
+    <link href={{url_for('static', filename='css/registration.css')}} rel="stylesheet">
+</head>
+<body>
+  <form method='post'>
+    {{ form.hidden_tag() }}
+    <div class="container">
+          <h1>Вход в аккаунт</h1>
+          {% if error %}
+            <p>
+              {{ error }}
+            </p>
+          {% endif %}
+          <hr>
+          {{ form.username.label() }}          
+          {{ form.username(placeholder='Введите имя пользователя') }}
+          {{ form.password.label() }}
+          {{ form.password(placeholder='Введите пароль') }}
+          <hr>
+          <button type="submit" class="registerbtn">Войти</button>
+        </div>
+      
+    <div class="container signin">
+      <p>Нету аккаунта? <a href=>Зарегестрироваться</a>.</p>
+        <a href={{url_for('index')}}><p>Вернуться</p></a>
+      </div>
+  </form>
+    
+    <script src={{url_for('static', filename='js/bootstrap.bundle.min.js')}} ></script>
+</body>
+</html>
