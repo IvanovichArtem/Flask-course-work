@@ -12,22 +12,22 @@
     {{ form.hidden_tag() }}
     <div class="container">
           <h1>Вход в аккаунт</h1>
-          {% if error %}
+          {% if form.error %}
             <p>
               {{ error }}
             </p>
           {% endif %}
           <hr>
-          {{ form.username.label() }}          
-          {{ form.username(placeholder='Введите имя пользователя') }}
-          {{ form.password.label() }}
-          {{ form.password(placeholder='Введите пароль') }}
+          {{ form.username.label(class='form-label') }}          
+          {{ form.username(class='form-control', placeholder='Введите имя пользователя') }}
+          {{ form.password.label(class='form-label') }}
+          {{ form.password(class='form-control', placeholder='Введите пароль') }}
           <hr>
           <button type="submit" class="registerbtn">Войти</button>
         </div>
       
     <div class="container signin">
-      <p>Нету аккаунта? <a href=>Зарегестрироваться</a>.</p>
+      <p>Нету аккаунта? <a href={{url_for('registration')}}>Зарегестрироваться</a>.</p>
         <a href={{url_for('index')}}><p>Вернуться</p></a>
       </div>
   </form>

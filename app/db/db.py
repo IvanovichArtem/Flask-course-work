@@ -7,6 +7,7 @@ class Database:
 
     def __del__(self):
         self.cursor.close()
+        self.conn.commit()
         self.conn.close()
 
     def all(self, **kwargs):
@@ -14,6 +15,10 @@ class Database:
         fetch = self.cursor.fetchall()
         return fetch 
     
+    def last_login(self, **kwargs):
+        self.cursor.execute(f"UPDATE {kwargs['table_name']} SET last_login=current_timestamp where username = '{kwargs['username']}'")
+        self.conn.commit()
+
     def filter(self, **kwargs):
         """sumary_line
         
@@ -36,7 +41,10 @@ class Database:
             if "__" in key:
                 prefix, postfix = key.split('__')
             else:
-                query_expression.append(f"{key} = {value}")
+                if type(value) is str:
+                    query_expression.append(f"{key} = '{value}'")
+                else:
+                    query_expression.append(f"{key} = {value}")
                 break
             if postfix == "gt":
                 query_expression.append(f"{prefix} > {value}")
@@ -54,6 +62,14 @@ class Database:
 
         return fetch
     
+    def create(self, table_name, **kwargs):
+        """INSERT INTO user_user(username,last_name,password,first_name,email)
+           VALUES('username','last_name','password','first','email');"""
+        keys = [str(i) for i in kwargs.keys()]
+        values = [f"'{i}'" for i in kwargs.values()]
+        self.cursor.execute(f"INSERT INTO {table_name}({','.join(keys)}) VALUES({','.join(values)})")
+        self.conn.commit()
+        
 
 
     def exists(self, table_name, **kwargs):
@@ -68,4 +84,5 @@ class Database:
 
 if __name__ == "__main__":
     db = Database(db_name="flask_museum", user="admin", password="root")
-    print(db.filter(table_name="catalog_exhibition", type_id=1))
+    db.create(table_name='user_user', username ='bober', last_name='1', password='1234', first_name='1',
+              email='')

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from db.db import Database
-from form import LoginForm
+from form import LoginForm, ProfileForm, RegistrationForm
 from flask_session import Session
 
 app = Flask(__name__)
@@ -55,26 +55,44 @@ def login():
             if db.exists('user_user', username=form.data['username'], password=form.data['password']):
                 session['logged_in'] = True
                 session['username'] = form.data['username']
+                db.last_login(table_name='user_user', username=session['username'])
                 return redirect(url_for('index'))
             else:
                 return render_template("user/login.html", form=form, error='Неправильный логин или пароль')
     else:
         return render_template("user/login.html", form=form)
 
-@app.route("/user/registration")
+@app.route("/user/registration", methods=["POST", "GET"])
 def registration():
-    ...
+    form = RegistrationForm(request.form)
+    if request.method == 'POST':
+        if not form.validate():
+            return render_template("user/registration.html", form=form, errors=[elem[0] for elem in form.errors.values()])
+        else:
+            db.create(table_name='user_user', username =form.data['username'], last_name=form.data['last_name'],
+                      password=form.data['password1'], first_name=form.data['first_name'],
+                      email=form.data['email'])
+            session['logged_in'] = True
+            session['username'] = form.data['username']
+            return redirect(url_for('index'))
+    else:
+        return render_template("user/registration.html", form=form)
 
-@app.route("/user/profile")
+@app.route("/user/profile", methods=['GET', 'POST'])
 def profile():
-    context = {
-        'title': 'Профиль',
-        'user': db.filter(table_name='user_user', username=str(session['username']))
-    }
-    return render_template("user/profile.html", context=context)  
+    form = ProfileForm(request.form)
+    user = db.filter(table_name='user_user', username=session['username'])[0]
+    if request.method == 'POST':
+        return render_template("user/profile.html", form=form,
+                            title='Профиль', user=user)  
+    else:
+        return render_template("user/profile.html", form=form,
+                            title='Профиль', user=user)  
+
 
 @app.route('/user/logout')
 def logout():
+    print(session['username'])
     session['username'] = None
     session['logged_in'] = False
     return redirect(url_for('index'))

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, EmailField, validators, IntegerField
+from wtforms import StringField, PasswordField, EmailField, validators, FileField
 
 class LoginForm(FlaskForm):
     username = StringField('Имя пользователя', [validators.Length(min=4, max=256)])
@@ -7,3 +7,23 @@ class LoginForm(FlaskForm):
         validators.DataRequired(),
     ])
 
+class ProfileForm(FlaskForm):
+    first_name = StringField('Имя')
+    last_name = StringField('Фамилия')
+    username = StringField('Логин', [validators.Length(min=4)])
+    email = EmailField('Email', [validators.Regexp("([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+",
+                                                    message='Invalid email address')])
+    img = FileField()
+
+class RegistrationForm(FlaskForm):
+    first_name = StringField('Имя', [validators.DataRequired()])
+    last_name = StringField('Фамилия',[validators.DataRequired()])
+    username = StringField('Логин', [validators.Length(min=4),
+                                     validators.DataRequired()])
+    email = StringField('Email', [validators.Regexp("([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+",
+                                                     message='Invalid email address')])
+    password1 = PasswordField('Пароль', [
+        validators.DataRequired()])
+    password2 = PasswordField('Повторите пароль', [
+        validators.DataRequired(),
+        validators.EqualTo('password1', 'Пароли должны быть одинаковы')])
