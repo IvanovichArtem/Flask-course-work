@@ -70,12 +70,15 @@ def registration():
         if not form.validate():
             return render_template("user/registration.html", form=form, errors=[elem[0] for elem in form.errors.values()])
         else:
-            db.create(table_name='user_user', username =form.data['username'], last_name=form.data['last_name'],
-                      password=form.data['password1'], first_name=form.data['first_name'],
-                      email=form.data['email'])
-            session['logged_in'] = True
-            session['username'] = form.data['username']
-            return redirect(url_for('index'))
+            if db.exists('user_user', username=form.data['username']):
+                return render_template("user/registration.html", form=form, error='Существет пользователь с таким логином')
+            else:
+                db.create(table_name='user_user', username =form.data['username'], last_name=form.data['last_name'],
+                        password=form.data['password1'], first_name=form.data['first_name'],
+                        email=form.data['email'])
+                session['logged_in'] = True
+                session['username'] = form.data['username']
+                return redirect(url_for('index'))
     else:
         return render_template("user/registration.html", form=form)
 
@@ -104,7 +107,6 @@ def profile():
     else:
         return render_template("user/profile.html", form=form,
                             title='Профиль', user=user)  
-
 
 @app.route('/user/logout')
 def logout():

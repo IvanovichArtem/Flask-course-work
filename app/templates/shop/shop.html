@@ -1,0 +1,77 @@
+{% extends "shop/base.html" %}
+
+{% load static %}
+
+{% block title %}
+  {{ title }}
+{% endblock title %}
+
+{% block text %}
+<div class="container">
+
+    <div class="row">
+
+        <div class="col-lg-2">
+            <h1 class="my-4">Каталог</h1>
+            <div class="list-group">
+              {% for category in categories %}
+                <a href={% url "shop:category" category.id %} class="list-group-item">{{ category }}</a>
+              {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-10">
+
+            <div class="row justify-content-center">
+              {% for product in products %}
+
+                  <div class="col-lg-5 col-md-5 mb-4">
+                      <div class="card h-100">
+                          <a href="#">
+                              <img class="card-img-top"
+                                  src={{ product.img.url }}
+                                  alt="">
+                          </a>
+                          <div class="card-body">
+                              <h4 class="card-title">
+                                  <p>{{ product.name }}</p>
+                              </h4>
+                              <h5>{{ product.price }} руб.</h5>
+                              <p class="card-text">{{ product.description }}</p>
+                          </div>
+                          <div class="card-footer text-center">
+                              <a class="btn btn-outline-success"
+                              href={% url "shop:basket_add" product.id %}>
+                                Добавить в корзину
+                              </a>
+                          </div>
+                      </div>
+                  </div>
+
+              {% endfor %}
+            </div>
+
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+{% endblock text %}
+

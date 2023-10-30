@@ -12,12 +12,8 @@
     {{ form.hidden_tag() }}
     <div class="container">
           <h1>Вход в аккаунт</h1>
-          {% if errors %}
-            {% for error in errors %}
-              <p>
-                {{ error }}
-              </p>
-            {% endfor %}
+          {% if error %}
+              {{ error }}
           {% endif %}
           <hr>
           {{ form.first_name.label(class='form-label')}}
