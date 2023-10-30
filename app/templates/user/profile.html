@@ -34,7 +34,7 @@
                                     <div class="row-md-6">
                                         <img class="profile-img" src=
                                         {% if user.img %}
-                                        {{ url_for('static', filename='media/'+user.img) }}
+                                            {{ url_for('static', filename='media/'+user.img) }}
                                         {% else %}
                                             {{url_for('static', filename='img/default_profile_img.jpg')}}
                                         {% endif %}>

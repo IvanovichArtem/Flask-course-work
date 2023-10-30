@@ -9,6 +9,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 db = Database(db_name="flask_museum", user="admin", password="root") 
 Session(app)
 
+
 @app.route("/")
 def index():
     context = {"title": "Главная"}
@@ -83,8 +84,23 @@ def profile():
     form = ProfileForm(request.form)
     user = db.filter(table_name='user_user', username=session['username'])[0]
     if request.method == 'POST':
-        return render_template("user/profile.html", form=form,
-                            title='Профиль', user=user)  
+        uppload_file = request.files['img']
+        if uppload_file.filename != '':
+            file_path = 'app/static/media/users_images/' + uppload_file.filename
+            uppload_file.save(file_path)
+            changed_data = {
+                'first_name': form.data['first_name'],
+                'last_name': form.data['last_name'],
+                'img': 'users_images/' + uppload_file.filename
+            }
+        else:
+            changed_data = {
+                'first_name': form.data['first_name'],
+                'last_name': form.data['last_name'],
+            }
+        
+        db.update(table_name='user_user', key='id', key_value=user['id'], **changed_data)
+        return redirect('profile') 
     else:
         return render_template("user/profile.html", form=form,
                             title='Профиль', user=user)  

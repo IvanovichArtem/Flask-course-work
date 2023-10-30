@@ -1,5 +1,6 @@
 from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
+
 class Database:
     def __init__(self, db_name, user, password, host="localhost", port="5432"):
         self.conn = connect(dbname=db_name, host=host, user=user, password=password, port=port)
@@ -70,8 +71,6 @@ class Database:
         self.cursor.execute(f"INSERT INTO {table_name}({','.join(keys)}) VALUES({','.join(values)})")
         self.conn.commit()
         
-
-
     def exists(self, table_name, **kwargs):
         self.cursor.execute(f"SELECT * FROM {table_name}")
         fetch = self.cursor.fetchall()
@@ -81,8 +80,17 @@ class Database:
                 return True
         return False
 
+    def update(self, table_name, key, key_value, **kwargs):
+        """UPDATE weather SET 
+        (first_name, last_name, img) = (first_name, last_name, img)
+  WHERE id=id;"""
+        keys = [str(i) for i in kwargs.keys()]
+        values = [f"'{i}'" for i in kwargs.values()]
+        query = f"UPDATE {table_name} SET ({','.join(keys)}) = ({','.join(values)}) WHERE {key}={key_value};"
+        self.cursor.execute(query)
+        self.conn.commit()
 
 if __name__ == "__main__":
     db = Database(db_name="flask_museum", user="admin", password="root")
-    db.create(table_name='user_user', username ='bober', last_name='1', password='1234', first_name='1',
-              email='')
+    a={'first_name': 'Vlaa', 'last_name': 'Kooo', 'img': ''}
+    db.update(table_name='user_user', key='id', key_value=3, **a)
