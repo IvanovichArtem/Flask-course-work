@@ -13,7 +13,7 @@
             <div class="card h-100">
                 <img class="card-img-top"
                     src="{{ url_for('static', filename='media/' + event.img ) }}"
-                    alt="">
+                    alt="{{event.id}}">
                 <div class="card-body">
                     <h4 class="card-title">
                         <p>{{event.name}}</p> <p>{{event.age_limit}}+</p>
@@ -29,7 +29,7 @@
                 </div>
                 <div class="card-footer text-center">
                     <a class="btn btn-outline-success"
-                    href=''>
+                    href={{ url_for('basket_add', id=event.id) }}>
                         Купить билет
                     </a>
                 </div>

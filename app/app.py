@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from db.db import Database
 from form import LoginForm, ProfileForm, RegistrationForm
 from flask_session import Session
+from login import login_required
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "SECRET_KEY very long"
@@ -9,7 +10,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 db = Database(db_name="flask_museum", user="admin", password="root") 
 Session(app)
 
-
+#MAIN CONTENT
 @app.route("/")
 def index():
     context = {"title": "Главная"}
@@ -45,7 +46,7 @@ def events():
     }
     return render_template("catalog/events.html", context=context)
 
-
+#USER METHODS
 @app.route("/user/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm(request.form)
@@ -86,6 +87,7 @@ def registration():
 def profile():
     form = ProfileForm(request.form)
     user = db.filter(table_name='user_user', username=session['username'])[0]
+    # baskets = db.filter(table_name)
     if request.method == 'POST':
         uppload_file = request.files['img']
         if uppload_file.filename != '':
@@ -115,5 +117,16 @@ def logout():
     session['logged_in'] = False
     return redirect(url_for('index'))
 
+@app.route('/user/basket_add/<int:id>')
+def basket_add(id):
+    if session['logged_in']:
+        
+        #TODO: Если существует, то +1 иначе создать и редирект на страничку ивента
+        
 
+
+        return redirect(request.referrer)
+    else:
+        return redirect(url_for('login'))
+#TODO: make a methods to add a basket and baskets
 
