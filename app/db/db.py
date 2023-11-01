@@ -44,9 +44,10 @@ class Database:
             else:
                 if type(value) is str:
                     query_expression.append(f"{key} = '{value}'")
+                    continue
                 else:
                     query_expression.append(f"{key} = {value}")
-                break
+                    continue
             if postfix == "gt":
                 query_expression.append(f"{prefix} > {value}")
             elif postfix == "gte":
@@ -85,12 +86,26 @@ class Database:
         (first_name, last_name, img) = (first_name, last_name, img)
   WHERE id=id;"""
         keys = [str(i) for i in kwargs.keys()]
-        values = [f"'{i}'" for i in kwargs.values()]
-        query = f"UPDATE {table_name} SET ({','.join(keys)}) = ({','.join(values)}) WHERE {key}={key_value};"
+        values = [f"'{i}'" if (type(i) is str) else f"{i}" for i in kwargs.values()]
+        if len(kwargs) == 1:
+            query = f"UPDATE {table_name} SET {','.join(keys)} = {','.join(values)} WHERE {key}={key_value};"
+        else:
+            query = f"UPDATE {table_name} SET ({','.join(keys)}) = ({','.join(values)}) WHERE {key}={key_value};"
         self.cursor.execute(query)
         self.conn.commit()
+    
+    def get_user_id(self, table_name, **kwargs):
+        key = list(kwargs.keys())[0]
+        value = kwargs.get(key)
+        query = f"SELECT id from {table_name} WHERE {key} = '{value}'"
+        self.cursor.execute(query)
+        fetch = self.cursor.fetchone()
+        return fetch['id']
+    
+    def query(self, query):
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
 
 if __name__ == "__main__":
     db = Database(db_name="flask_museum", user="admin", password="root")
-    a={'first_name': 'Vlaa', 'last_name': 'Kooo', 'img': ''}
-    db.update(table_name='user_user', key='id', key_value=3, **a)
+    db.get_user_id(table_name='user_user', username='Lagrush')

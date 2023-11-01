@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from db.db import Database
 from form import LoginForm, ProfileForm, RegistrationForm
 from flask_session import Session
-from login import login_required
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "SECRET_KEY very long"
@@ -57,7 +56,7 @@ def login():
             if db.exists('user_user', username=form.data['username'], password=form.data['password']):
                 session['logged_in'] = True
                 session['username'] = form.data['username']
-                db.last_login(table_name='user_user', username=session['username'])
+                session['user_id'] = db.get_user_id('user_user', username=form.data['username'])
                 return redirect(url_for('index'))
             else:
                 return render_template("user/login.html", form=form, error='Неправильный логин или пароль')
@@ -79,6 +78,7 @@ def registration():
                         email=form.data['email'])
                 session['logged_in'] = True
                 session['username'] = form.data['username']
+                session['user_id'] = db.get_user_id('user_user', username=form.data['username'])
                 return redirect(url_for('index'))
     else:
         return render_template("user/registration.html", form=form)
@@ -87,7 +87,12 @@ def registration():
 def profile():
     form = ProfileForm(request.form)
     user = db.filter(table_name='user_user', username=session['username'])[0]
-    # baskets = db.filter(table_name)
+    baskets = db.query(f"""SELECT cb.id, cb.quantity, ce.name,
+                        ce.description, ce.price
+                         FROM catalog_basket cb 
+                       JOIN catalog_exhibition ce
+                        ON ce.id=cb.exhibition_id
+                        WHERE cb.user_id = {user['id']}""")
     if request.method == 'POST':
         uppload_file = request.files['img']
         if uppload_file.filename != '':
@@ -108,22 +113,26 @@ def profile():
         return redirect('profile') 
     else:
         return render_template("user/profile.html", form=form,
-                            title='Профиль', user=user)  
+                            title='Профиль', user=user, baskets=baskets, )  
 
 @app.route('/user/logout')
 def logout():
     print(session['username'])
     session['username'] = None
     session['logged_in'] = False
+    session['user_id'] = None
     return redirect(url_for('index'))
 
-@app.route('/user/basket_add/<int:id>')
-def basket_add(id):
+@app.route('/user/basket_add/<int:exhibit_id>')
+def basket_add(exhibit_id):
     if session['logged_in']:
-        
-        #TODO: Если существует, то +1 иначе создать и редирект на страничку ивента
-        
-
+        exhibition = db.filter(table_name='catalog_exhibition', id=exhibit_id)[0]
+        basket = db.filter(table_name='catalog_basket', user_id=session['user_id'], exhibition_id=exhibition['id'])
+        if basket == []:
+            db.create(table_name='catalog_basket', quantity=1, exhibition_id=exhibition['id'],
+                      user_id=session['user_id'])
+        else:
+            db.update(table_name='catalog_basket', key='id', key_value=basket[0]['id'], quantity = basket[0]['quantity']+1)
 
         return redirect(request.referrer)
     else:
