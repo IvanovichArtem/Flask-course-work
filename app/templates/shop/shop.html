@@ -1,7 +1,5 @@
 {% extends "shop/base.html" %}
 
-{% load static %}
-
 {% block title %}
   {{ title }}
 {% endblock title %}
@@ -15,7 +13,7 @@
             <h1 class="my-4">Каталог</h1>
             <div class="list-group">
               {% for category in categories %}
-                <a href={% url "shop:category" category.id %} class="list-group-item">{{ category }}</a>
+                <a href={{ url_for('shop', category_id=category.id)}} class="list-group-item">{{ category.name }}</a>
               {% endfor %}
             </div>
         </div>
@@ -29,7 +27,7 @@
                       <div class="card h-100">
                           <a href="#">
                               <img class="card-img-top"
-                                  src={{ product.img.url }}
+                                  src="{{ url_for('static', filename='media/' + product.img ) }}"
                                   alt="">
                           </a>
                           <div class="card-body">
@@ -41,7 +39,7 @@
                           </div>
                           <div class="card-footer text-center">
                               <a class="btn btn-outline-success"
-                              href={% url "shop:basket_add" product.id %}>
+                              href={#{% url "shop:basket_add" product.id %}#}>
                                 Добавить в корзину
                               </a>
                           </div>
@@ -51,7 +49,7 @@
               {% endfor %}
             </div>
 
-            <nav aria-label="Page navigation example">
+            {#<nav aria-label="Page navigation example">
                 <ul class="pagination justify-content-center">
                     <li class="page-item disabled">
                         <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
@@ -63,15 +61,11 @@
                         <a class="page-link" href="#">Next</a>
                     </li>
                 </ul>
-            </nav>
+            </nav>#}
 
         </div>
-
     </div>
-
 </div>
-
-
 
 {% endblock text %}
 
