@@ -33,7 +33,9 @@ def contacts():
 def exhibitions():
     context = {
         "title": "Выставки",
-        "exhibitions": db.filter(table_name="catalog_exhibition", type_id=1),
+        "exhibitions": db.query(
+            "SELECT * FROM catalog_exhibition WHERE type_id = 1 AND CURRENT_DATE BETWEEN start_date AND end_date"
+        ),
     }
     return render_template("catalog/exhibition.html", context=context)
 
@@ -42,7 +44,9 @@ def exhibitions():
 def events():
     context = {
         "title": "Выставки",
-        "events": db.filter(table_name="catalog_exhibition", type_id=2),
+        "events": db.query(
+            "SELECT * FROM catalog_exhibition WHERE type_id = 2 AND CURRENT_DATE BETWEEN start_date AND end_date"
+        ),
     }
     return render_template("catalog/events.html", context=context)
 
@@ -216,3 +220,60 @@ def shop(category_id):
 @app.route("/shop/about")
 def shop_about():
     return render_template("shop/about.html", title="О магазине")
+
+
+@app.route("/shop/basket_add/<int:product_id>")
+def basket_product_add(product_id):
+    if not session["logged_in"]:
+        return redirect(url_for("login"))
+    product = db.filter(table_name="shop_product", id=product_id)[0]
+    basket = db.filter(
+        table_name="shop_basket",
+        user_id=session["user_id"],
+        product_id=product["id"],
+    )
+    if basket == []:
+        db.create(
+            table_name="shop_basket",
+            quantity=1,
+            product_id=product["id"],
+            user_id=session["user_id"],
+        )
+    else:
+        db.update(
+            table_name="shop_basket",
+            key="id",
+            key_value=basket[0]["id"],
+            quantity=basket[0]["quantity"] + 1,
+        )
+
+    return redirect(request.referrer)
+
+
+@app.route("/shop/basket")
+def shop_basket():
+    if not session["logged_in"]:
+        return redirect(url_for("login"))
+    user = db.filter(table_name="user_user", username=session["username"])[0]
+    baskets = db.query(
+        f"""SELECT sb.id, sb.quantity, sp.name, sp.description,
+        sp.price FROM shop_basket
+        sb JOIN shop_product sp 
+        ON sb.product_id=sp.id 
+        WHERE sb.user_id = {user['id']}"""
+    )
+    total_count = sum([basket["quantity"] for basket in baskets])
+    total_price = sum([basket["quantity"] * basket["price"] for basket in baskets])
+    return render_template(
+        "shop/basket.html",
+        baskets=baskets,
+        total_count=total_count,
+        total_price=total_price,
+        title="Корзина",
+    )
+
+
+@app.route("/shop/basket_delete/<int:basket_id>")
+def basket_product_delete(basket_id):
+    db.delete(table_name="shop_basket", condition=f"id = {basket_id}")
+    return redirect(request.referrer)

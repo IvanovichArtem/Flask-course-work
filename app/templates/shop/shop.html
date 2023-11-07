@@ -39,7 +39,7 @@
                           </div>
                           <div class="card-footer text-center">
                               <a class="btn btn-outline-success"
-                              href={#{% url "shop:basket_add" product.id %}#}>
+                              href={{url_for('basket_product_add', product_id=product.id)}}>
                                 Добавить в корзину
                               </a>
                           </div>

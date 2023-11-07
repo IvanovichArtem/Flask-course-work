@@ -17,7 +17,7 @@
               <div class="navbar-nav">
                   <a class="nav-link" aria-current="page" href={{ url_for('shop') }}>Каталог</a>
                   <a class="nav-link" aria-current="page" href={{url_for('shop_about')}}>О магазине</a>
-                  <a class="nav-link" aria-current="page" href=>Оплата и доставка</a>
+                  <a class="nav-link" aria-current="page" href={{url_for('shop_basket')}}>Корзина</a>
               </div>
           </div>
           {% if session.logged_in %}

@@ -17,12 +17,13 @@
                 <div class="card-body">
                     <h4 class="card-title">
                         <p>{{exhibit.name}}</p> <p>{{exhibit.age_limit}}+</p>
+                        <p>С {{exhibit.start_date}} по {{exhibit.end_date}}</p>
                     </h4>
                     <h5> 
                         {% if exhibit.price == 0 %}
                             Бесплатно!!!
                         {% else %}
-                            {{exhibit.price }} руб.
+                            {{ exhibit.price }} руб.
                         {% endif %}
                     </h5>
                     <p class="card-text">{{exhibit.description}}</p>
