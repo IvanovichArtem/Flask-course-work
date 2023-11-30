@@ -1,7 +1,7 @@
 .nav-link {
- font-size: 18pt; 
- color: black;  
- font-family: "Muli"; 
+    font-size: 18pt;
+    color: black;
+    font-family: "Muli";
 }
 
 .nav-link:hover {
@@ -15,8 +15,8 @@
 }
 
 .nav-item {
- padding-left: 20pt;
- padding-right: 20pt;
+    padding-left: 20pt;
+    padding-right: 20pt;
 }
 
 .my-carousel {
@@ -55,7 +55,7 @@ hr {
 
 #text {
     margin-left: 80px;
-    width: 1000px;
+    width: 1400px;
 }
 
 #text h2 {
@@ -81,6 +81,6 @@ hr {
 
 @font-face {
     font-family: "Muli";
-    src: 
-    local("../fonts/Muli-Regular.ttf");
+    src:
+        local("../fonts/Muli-Regular.ttf");
 }

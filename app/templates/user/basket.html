@@ -33,7 +33,7 @@
                 <h4 class="float-right">{{total_price}} руб.</h4>
             </div>
         </div>
-        <a class="btn btn-success btn-lg float-right" href="#">
+        <a class="btn btn-success btn-lg float-right" href={{url_for('checkout_exhbibition', user_id=user.id)}}>
             Оформить заказ
         </a>
     </div>

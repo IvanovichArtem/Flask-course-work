@@ -1,0 +1,43 @@
+version: '3'
+
+# docker-compose -f docker-compose.yml build
+# docker-compose -f docker-compose.yml up -d
+services:
+  app:
+    build: ./app
+    container_name: flask_app
+    command: gunicorn --bind 0.0.0.0:5000 app:app # WSGI server
+    environment:
+      - DATABASE_URL=postgresql://admin:root@db:5432/flask_museum # путь до бд, см. db service
+    volumes:
+      - ./app:/app
+      - ./app/tickets/t:/app/tickets/t
+
+    expose:
+      - 5000
+    depends_on:
+      - db
+  db:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=flask_museum
+  pgadmin:
+    image: dpage/pgadmin4
+    depends_on:
+      - db
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=artemivanovic489@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=root # если сменить здесь, то нужно удалить контентер
+      - PGADMIN_LISTEN_ADDRESS=0.0.0.0 # чтобы не было косяков с nginx лушче в одну сеть с app
+      - PGADMIN_LISTEN_PORT=5555
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./static:/home/web/default/static
+    depends_on:
+      - app
+      - pgadmin
