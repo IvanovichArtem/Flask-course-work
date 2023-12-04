@@ -1,13 +1,16 @@
 from passlib.hash import pbkdf2_sha256
 from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+import os
+import matplotlib.pyplot as plt
 
 conn = SQLAlchemy()
 
 
 def all(table_name):
     engine = conn.engine.connect()
-    result = engine.execute(text(f"SELECT * FROM {table_name}"))
+    result = engine.execute(text(f"SELECT * FROM {table_name} ORDER BY id ASC"))
     return result.mappings().all()
 
 
@@ -15,10 +18,46 @@ def last_login(**kwargs):
     engine = conn.engine.connect()
     engine.execute(
         text(
-            f"UPDATE {kwargs['table_name']} SET last_login=current_timestamp where username = '{kwargs['username']}'"
+            f"UPDATE {kwargs['table_name']} SET last_login=current_timestamp where id = '{kwargs['id']}'"
         )
     )
     engine.commit()
+
+
+def create_json():
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    json_filename = f"flask_museum_json_{timestamp}.json"
+    table_names = query(
+        """SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'""",
+        True,
+    )
+    table_names = [value["table_name"] for value in table_names]
+    with open(os.path.join("media/db", json_filename), "w") as f:
+        for name in table_names:
+            json_text = query(
+                f"""SELECT json_agg(t) FROM (
+                SELECT * FROM {name}
+                ) t;""",
+                True,
+            )[0]["json_agg"]
+            if json_text:
+                f.write(str(json_text).replace("'", '"'))
+    return json_filename
+
+
+def create_pdf(data: dict):
+    months = list(data.keys())
+    values = list(data.values())
+
+    plt.bar(months, values)
+    plt.xlabel("Месяц")
+    plt.ylabel("Значение")
+    plt.title("График данных по месяцам")
+    name = str(datetime.now())
+    plt.savefig(f"media/pdf/{name}.pdf")
+    return f"{name}.pdf"
 
 
 def filter(table_name: str, **kwargs):
@@ -55,7 +94,7 @@ def filter(table_name: str, **kwargs):
 
     result = engine.execute(
         text(
-            f"SELECT * FROM {table_name} WHERE {' AND '.join(query_expression)}"
+            f"SELECT * FROM {table_name} WHERE {' AND '.join(query_expression)} ORDER BY id ASC"
         )
     )
     return result.mappings().all()
@@ -127,6 +166,14 @@ def get_user_id(table_name: str, **kwargs):
     engine.execute(query)
     fetch = engine.fetchone()
     return fetch["id"]
+
+
+def get(table_name, id, name):
+    engine = conn.engine.connect()
+    result = engine.execute(
+        text(f"SELECT {name} FROM {table_name} WHERE id = {id}")
+    )
+    return result.mappings().one()[name]
 
 
 def insert(query: str):

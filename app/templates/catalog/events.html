@@ -7,69 +7,137 @@
 
 {% block text %}
 <div class="row justify-content-center">
-        <h1>{{ context.title }}</h2>
-        {% for event in context.events %}
-        <div class="col-lg-5 col-md-6 mb-4">
-            <div class="card h-100">
-                <img class="card-img-top"
-                    src="{{ url_for('static', filename='media/' + event.img ) }}"
-                    alt="{{event.id}}">
-                <div class="card-body">
-                    <h4 class="card-title">
-                        <p>{{event.name}}</p> <p>{{event.age_limit}}+</p>
-                    </h4>
-                    <h5>
-                        {% if event.price == 0 %}
-                            Бесплатно!!!
-                        {% else %}
-                            {{event.price }} руб.
-                        {% endif %}
-                    </h5>
-                    <p class="card-text">{{event.description}}</p>
+    <h1>{{ context.title }}</h2>
+        {% if session.is_superuser %}
+            <div class="col-lg-5 col-md-6 mb-4">
+                <form method="post" action="{{url_for('create_exhibit')}}" enctype='multipart/form-data'>
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <label class='form-label' for="name">Название:</label>
+                            <input name="name" class="form-control" type="text" value=''>
+                            
+                            <label class='form-label' for="age_limit">Возрастное ограничение:</label>
+                            <input name="age_limit" min='0' max='18' class="form-control" type="number" value='12'>
+                            
+                            <label class='form-label' for="start_date">Дата начала:</label>
+                            <input name="start_date" class="form-control" type="date" value='now'>
+                            
+                            <label class='form-label' for="end_date">Дата окончания:</label>
+                            <input name="end_date" class="form-control" type="date" value='now'>
+
+                            <label class='form-label' for="img">Загрузить картинку</label>
+                            <input name='img' class='form-control' type='file'>
+
+                            <label class='form-label' for="price">Цена:</label>
+                            <input name="price" min='0' step="0.01" class="form-control" type="number" value='0'>
+                            
+                            <label class='form-label' for="tickets_quantity">Кол-во билетов:</label>
+                            <input name="tickets_quantity" min='0' class="form-control" type="number" value='0'>
+                            
+                            <label class='form-label' for="description">Описание:</label>
+                            <input name="description" class="form-control" type="text" value="">
+                            
+                            <label class='form-label' for="type_id">Тип - Событие</label>
+                            <input name="type_id" class="form-control" disabled type="number"value="2">
+                        </h4>
+                    </div>
+                    <div class="card-footer text-center">
+                        <input type='submit' value='Создать' class='form-control btn btn-outline-primary'>
+                    </div>
                 </div>
-                <div class="card-footer text-center">
-                    <a class="btn btn-outline-success"
-                    href={{ url_for('basket_add', exhibit_id=event.id) }}>
-                        Купить билет
-                    </a>
-                </div>
+                </form> 
+                <br>
             </div>
-        </div>
-        {% endfor %}
+            {% for event in context.events %}
+            <div class="col-lg-5 col-md-5 mb-6">
+                    <form method="post" action="{{ url_for('change_exhibit_info', id=event.id) }}" enctype='multipart/form-data'>
+                    <div class="card h-100">
+                        <img class="card-img-top"
+                            src={{ url_for('media', filename=event.img) }}
+                            alt=""
+                            height='100', width='200'>
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                <label class='form-label' for="name">Название:</label>
+                                <input name="name" class="form-control" type="text" value="{{event.name}}">
+                                
+                                <label class='form-label' for="age_limit">Возрастное ограничение:</label>
+                                <input name="age_limit" min='0' max='18' class="form-control" type="number" value={{event.age_limit}}>
+                                
+                                <label class='form-label' for="start_date">Дата начала:</label>
+                                <input name="start_date" class="form-control" type="date" value={{event.start_date}}>
+                                
+                                <label class='form-label' for="end_date">Дата окончания:</label>
+                                <input name="end_date" class="form-control" type="date" value={{event.end_date}}>
+
+                                <label class='form-label' for="img">Загрузить картинку</label>
+                                <input name='img' class='form-control' type='file'>
+                            </h4>
+                            <h5> 
+                                <label class='form-label' for="price">Цена:</label>
+                                <input name="price" min='0' step="0.01" class="form-control" type="number" value={{event.price}}>
+                                
+                                <label class='form-label' for="tickets_quantity">Кол-во билетов:</label>
+                                <input name="tickets_quantity" min='0' class="form-control" type="number" value={{event.tickets_quantity}}>
+                                
+                                <label class='form-label' for="description">Описание:</label>
+                                <input name="description" class="form-control" type="text" value="{{event.description}}">
+                                
+                                <label class='form-label' for="exhibit">Выставка:</label>
+                                <input class='form-control' type="radio" name="exhibit" value="1">
+                                
+                                <label class='form-label' for="event">Событие:</label>
+                                <input class='form-control' type="radio" name="event" value="2">
+                                
+                                <label class='form-label' for="type_id">Тип выставки (1-Выставка, 2-Событие):</label>
+                                <input name="type_id" class="form-control" type="number" min='1' max='2' value="{{event.type_id}}">
+                            </h5>
+                            
+                        </div>
+                        <div class="card-footer text-center">
+                            <input type='submit' value='Изменить' class='form-control'>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a class="btn btn-primary btn-lg " href={{url_for('delete_exhibit', id=event.id)}} role="button">Удалить</a>
+                        </div>
+                    </div>
+                    </form>
+                    <br>
+                    <br>
+                </div>
+            {% endfor %}
+        {% else %}
+            {% for event in context.events %}
+                <div class="col-lg-5 col-md-6 mb-4">
+                    <div class="card h-100">
+                            <img class="card-img-top"
+                                src={{ url_for('media', filename=event.img) }}
+                                alt="">
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                <p>{{event.name}}</p> <p>{{event.age_limit}}+</p>
+                                <p>С {{event.start_date}} по {{event.end_date}}</p>
+                            </h4>
+                            <h5> 
+                                {% if event.price == 0 %}
+                                    Бесплатно!!!
+                                {% else %}
+                                    {{ event.price }} руб.
+                                {% endif %}
+                            </h5>
+                            <p class="card-text">{{event.description}}</p>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a class="btn btn-outline-success"
+                            href={{ url_for('basket_add', exhibit_id=event.id) }}>
+                                Купить билет 
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
     </div>
-    {# <div class='d-flex justify-content-center'>
-        <nav aria-label="Page navigation example">
-            <ul class="pagination">
-                <li class="page-item {% if not events.has_previous %} disabled {% endif %}">
-                    <a class="page-link" href=
-                    {% if events.has_previous %} 
-                        {% url "catalog:event_paginator" events.previous_page_number %} 
-                    {% else %}
-                        '#' 
-                    {% endif %}>
-                    Предыдущая
-                </a>
-                {% for page in events.paginator.page_range %}
-                </li>
-                    <li class="page-item"><a class="page-link" href={% url "catalog:event_paginator" page %}>
-                        {{ page }}
-                    </a>
-                </li>
-                {% endfor %}
-                <li class="page-item {% if not events.has_next %} disabled {% endif %}">
-                    <a class="page-link" href=
-                        {% if events.has_next %} 
-                            {% url "catalog:event_paginator" events.next_page_number %} 
-                        {% else %}
-                            '#' 
-                        {% endif %}>
-                        Следующая
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </div>
-    #}
-    
 
 {% endblock text %}

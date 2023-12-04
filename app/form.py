@@ -37,7 +37,6 @@ class ProfileForm(FlaskForm):
         ],
     )
     password = StringField("Пароль")
-    img = FileField()
 
 
 class RegistrationForm(FlaskForm):

@@ -1,12 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    send_from_directory,
+    send_file,
+)
 from form import LoginForm, ProfileForm, RegistrationForm, ProductBuyForm
 from flask_session import Session
-from datetime import date
+from datetime import date, datetime
 from db import db
 from tickets.ticket import create_tickets
 from tickets.send import send_email, del_files
 import os
 from datetime import date, datetime
+from tables import *
+import ast
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
@@ -14,10 +25,28 @@ Session(app)
 db.conn.init_app(app)
 
 
+@app.route("/media/<path:filename>")
+def media(filename):
+    media_directory = "media/"  # Путь к директории с медиа-файлами
+    return send_from_directory(media_directory, filename)
+
+
+@app.route("/admin/download_json")
+def download_json():
+    return send_file("media/db/" + db.create_json(), as_attachment=True)
+
+
+@app.route("/admin/download_pdf/<data>")
+def download_pdf(data):
+    data = ast.literal_eval(data)
+    name = db.create_pdf(data)
+    return send_file("media/pdf/" + name, as_attachment=True)
+
+
 # MAIN CONTENT
 @app.route("/")
 def index():
-    context = {"title": f"Главная"}
+    context = {"title": f"а"}
     return render_template("catalog/index.html", context=context)
 
 
@@ -35,26 +64,77 @@ def contacts():
 
 @app.route("/exhibitions")
 def exhibitions():
-    context = {
-        "title": "Выставки",
-        "exhibitions": db.query(
-            "SELECT * FROM catalog_exhibition WHERE (type_id = 1) AND (CURRENT_DATE BETWEEN start_date AND end_date) AND (tickets_quantity > 0)",
-            True,
-        ),
-    }
+    if session["is_superuser"]:
+        context = {
+            "title": "Выставки",
+            "exhibitions": db.filter(
+                table_name="catalog_exhibition", type_id=1
+            ),
+        }
+    else:
+        context = {
+            "title": "Выставки",
+            "exhibitions": db.query(
+                "SELECT * FROM catalog_exhibition WHERE (type_id = 1) AND (CURRENT_DATE BETWEEN start_date AND end_date) AND (tickets_quantity > 0)",
+                True,
+            ),
+        }
     return render_template("catalog/exhibition.html", context=context)
 
 
 @app.route("/events")
 def events():
-    context = {
-        "title": "События",
-        "events": db.query(
-            "SELECT * FROM catalog_exhibition WHERE (type_id = 2) AND (CURRENT_DATE BETWEEN start_date AND end_date) AND (tickets_quantity > 0)",
-            True,
-        ),
-    }
+    if session["is_superuser"]:
+        context = {
+            "title": "События",
+            "events": db.filter(table_name="catalog_exhibition", type_id=2),
+        }
+    else:
+        context = {
+            "title": "События",
+            "events": db.query(
+                "SELECT * FROM catalog_exhibition WHERE (type_id = 2) AND (CURRENT_DATE BETWEEN start_date AND end_date) AND (tickets_quantity > 0)",
+                True,
+            ),
+        }
     return render_template("catalog/events.html", context=context)
+
+
+@app.route("/change_exhibit_info/<int:id>", methods=["POST"])
+def change_exhibit_info(id):
+    uppload_file = request.files["img"]
+    form = dict(request.form)
+    if uppload_file.filename != "":
+        os.remove(
+            "media/"
+            + db.get(table_name="catalog_exhibition", id=id, name="img")
+        )
+        filepath = "media/exhibition_images/"
+        uppload_file.save(os.path.join(filepath, uppload_file.filename))
+        form["img"] = "exhibition_images/" + uppload_file.filename
+
+    db.update(table_name="catalog_exhibition", key="id", key_value=id, **form)
+    return redirect(request.referrer)
+
+
+@app.route("/delete_exhibit/<int:id>")
+def delete_exhibit(id):
+    db.delete(table_name="catalog_exhibition", condition=f"id = {id}")
+    return redirect(request.referrer)
+
+
+@app.route("/create_exhibit", methods=["POST"])
+def create_exhibit():
+    uppload_file = request.files["img"]
+    form = dict(request.form)
+    if uppload_file.filename != "":
+        filepath = "media/exhibition_images"
+        uppload_file.save(os.path.join(filepath, uppload_file.filename))
+        form["img"] = "exhibition_images/" + uppload_file.filename
+    else:
+        form["img"] = ""
+    db.create(table_name="catalog_exhibition", **form)
+    return redirect(request.referrer)
 
 
 # USER METHODS
@@ -73,12 +153,11 @@ def login():
                 if db.verify_password(form.data["password"], user["password"]):
                     session["logged_in"] = True
                     session["username"] = form.data["username"]
+                    session["is_superuser"] = user["is_superuser"]
                     session["user_id"] = db.get_user_id(
                         table_name="user_user", username=form.data["username"]
                     )
-                    db.last_login(
-                        table_name="user_user", username=form.data["username"]
-                    )
+                    db.last_login(table_name="user_user", id=session["user_id"])
                     return redirect(url_for("index"))
                 else:
                     return render_template(
@@ -120,12 +199,12 @@ def registration():
                     last_name=form.data["last_name"],
                     password=db.code(form.data["password1"]),
                     is_superuser=False,
-                    img="",
                     date_joined=f"{datetime.now()}",
                     first_name=form.data["first_name"],
                     email=form.data["email"],
                 )
                 session["logged_in"] = True
+                session["is_superuser"] = False
                 session["username"] = form.data["username"]
                 session["user_id"] = db.get_user_id(
                     "user_user", username=form.data["username"]
@@ -133,6 +212,23 @@ def registration():
                 return redirect(url_for("index"))
     else:
         return render_template("user/registration.html", form=form)
+
+
+@app.route("/upload/<int:user_id>", methods=["POST"])
+def upload(user_id):
+    user = db.filter(table_name="user_user", id=user_id)[0]
+    uppload_file = request.files["file"]
+    file_path = "media/users_images/"
+    uppload_file.save(os.path.join(file_path, uppload_file.filename))
+    if user["img"] != "":
+        os.remove("media/" + user["img"])
+    db.update(
+        table_name="user_user",
+        key="id",
+        key_value=user["id"],
+        img="users_images/" + uppload_file.filename,
+    )
+    return redirect(request.referrer)
 
 
 @app.route("/user/profile", methods=["GET", "POST"])
@@ -153,27 +249,10 @@ def profile():
         [basket["quantity"] * basket["price"] for basket in baskets]
     )
     if request.method == "POST":
-        uppload_file = request.files["img"]
-        if uppload_file.filename != "":
-            file_path = (
-                url_for("static", file_path="media/users_images/")
-                + uppload_file.filename
-            )
-            uppload_file.save(file_path)
-            changed_data = {
-                "first_name": form.data["first_name"],
-                "last_name": form.data["last_name"],
-                "password": db.code(form.data["password"]),
-                "email": form.data["email"],
-                "img": "users_images/" + uppload_file.filename,
-            }
-        else:
-            changed_data = {
-                "first_name": form.data["first_name"],
-                "last_name": form.data["last_name"],
-                "email": form.data["email"],
-                "password": db.code(form.data["password"]),
-            }
+        changed_data = {
+            "first_name": form.data["first_name"],
+            "last_name": form.data["last_name"],
+        }
 
         db.update(
             table_name="user_user",
@@ -183,21 +262,56 @@ def profile():
         )
         return redirect("profile")
     else:
-        return render_template(
-            "user/profile.html",
-            form=form,
-            title="Профиль",
-            user=user,
-            baskets=baskets,
-            total_count=total_count,
-            total_price=total_price,
-        )
+        if session["is_superuser"]:
+            first_table = get_last_users()
+            second_table = get_products_order_count_by_month()
+            third_table = get_exhibition_order_count_by_month()
+            return render_template(
+                "user/profile.html",
+                form=form,
+                title="Профиль",
+                user=user,
+                baskets=baskets,
+                total_count=total_count,
+                total_price=total_price,
+                first_table=first_table,
+                second_table=second_table,
+                third_table=third_table,
+            )
+        else:
+            return render_template(
+                "user/profile.html",
+                form=form,
+                title="Профиль",
+                user=user,
+                baskets=baskets,
+                total_count=total_count,
+                total_price=total_price,
+            )
+
+
+@app.route("/admin/create_superuser", methods=["POST"])
+def create_superuser():
+    form = dict(request.form)
+    form["password"] = db.code(form["password"])
+    now = datetime.now()
+    db.create(
+        table_name="user_user",
+        **form,
+        is_superuser=True,
+        img="",
+        last_login=now,
+        date_joined=now,
+        email="uchebaivanovic@gmail.com",
+    )
+    return redirect(request.referrer)
 
 
 @app.route("/user/logout")
 def logout():
     print(session["username"])
     session["username"] = None
+    session["is_superuser"] = None
     session["logged_in"] = False
     session["user_id"] = None
     return redirect(request.referrer)
@@ -240,17 +354,84 @@ def delete_basket(basket_id):
     return redirect(request.referrer)
 
 
-@app.route("/shop", defaults={"category_id": None})
-@app.route("/shop/<int:category_id>")
-def shop(category_id):
+@app.route("/change_product_info/<int:id>", methods=["POST"])
+def change_product_info(id):
+    uppload_file = request.files["img"]
+    form = dict(request.form)
+    if uppload_file.filename != "":
+        os.remove(
+            "media/" + db.get(table_name="shop_product", id=id, name="img")
+        )
+        filepath = "media/product_images/"
+        uppload_file.save(os.path.join(filepath, uppload_file.filename))
+        form["img"] = "product_images/" + uppload_file.filename
+
+    db.update(table_name="shop_product", key="id", key_value=id, **form)
+    return redirect(request.referrer)
+
+
+@app.route("/create_product_category", methods=["POST"])
+def create_product_category():
+    form = request.form
+    db.create(table_name="shop_producttype", **form)
+    return redirect(request.referrer)
+
+
+@app.route("/delete_product_category", methods=["POST"])
+def delete_product_category():
+    id = request.form["id"]
+    db.delete(table_name="shop_producttype", condition=f"id = {id}")
+    return redirect(request.referrer)
+
+
+@app.route("/delete_product/<int:id>")
+def delete_product(id):
+    db.delete(table_name="shop_product", condition=f"id = {id}")
+    return redirect(request.referrer)
+
+
+@app.route("/create_product", methods=["POST"])
+def create_product():
+    uppload_file = request.files["img"]
+    form = dict(request.form)
+    if uppload_file.filename != "":
+        filepath = "media/product_images"
+        uppload_file.save(os.path.join(filepath, uppload_file.filename))
+        form["img"] = "product_images/" + uppload_file.filename
+    else:
+        form["img"] = ""
+    db.create(table_name="shop_product", **form)
+    return redirect(request.referrer)
+
+
+@app.route("/shop")
+def shop():
     categories = db.all(table_name="shop_producttype")
-    if category_id:
-        products = db.filter(table_name="shop_product", category_id=category_id)
+    form = request.args
+    search_text = form.getlist("search_text")
+    category_ids = form.getlist("category_ids")
+    if form:
+        query = "SELECT * FROM shop_product WHERE "
+        conditions = []
+
+        if search_text:
+            conditions.append(f"name LIKE '%{search_text[0]}%'")
+
+        if category_ids:
+            if len(category_ids) == 1:
+                conditions.append(f"category_id = {category_ids[0]}")
+            else:
+                category_ids = tuple(category_ids)
+                conditions.append(f"category_id IN {category_ids}")
+
+        if conditions:
+            query += " AND ".join(conditions)
+        products = db.query(query, True)
     else:
         products = db.all(table_name="shop_product")
     return render_template(
         "shop/shop.html",
-        title="Магазин",
+        title=f"Магазин",
         categories=categories,
         products=products,
     )

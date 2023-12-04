@@ -9,60 +9,201 @@
 
     <div class="row">
 
-        <div class="col-lg-2">
+        {% if not session.is_superuser %}
+            <div class="col-lg-3">
             <h1 class="my-4">Каталог</h1>
-            <div class="list-group">
-              {% for category in categories %}
-                <a href={{ url_for('shop', category_id=category.id)}} class="list-group-item">{{ category.name }}</a>
-              {% endfor %}
+            <form class="form-product">
+            <input class="form-control" type="text" name="search_text" placeholder="Введите текст">
+            <br>
+            
+            {% for category in categories %}
+            <input class="form-check-input" type="checkbox" name="category_ids" value={{ category.id }}>
+            <label class="form-check-label" for="category{{ category.id }}">
+                {{ category.name }}
+            </label><br>
+            {% endfor %}
+            <br>
+            <button type="submit" class="btn btn-primary">Выполнить</button>
+            </form>
             </div>
-        </div>
+        {% endif %}
+        <div class="col-lg-8">
 
-        <div class="col-lg-10">
+            {% if session.is_superuser %}
+                {# Создание нового товара#}
+                <div class="col-lg-8 col-md-10 mb-4">
+                    <form method="post" action="{{url_for('create_product')}}" enctype='multipart/form-data'>
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title">
+                                    <label class='form-label' for="name">Название:</label>
+                                    <input name="name" class="form-control" type="text" value=''>
+                                    
+                                    <label class='form-label' for="img">Загрузить картинку</label>
+                                    <input name='img' class='form-control' type='file'>
 
+                                    <label class='form-label' for="price">Цена:</label>
+                                    <input name="price" min='0' step="0.01" class="form-control" type="number" value='0'>
+                                    
+                                    <label class='form-label' for="quantity">Кол-во товаров:</label>
+                                    <input name="quantity" min='0' class="form-control" type="number" value='0'>
+                                    
+                                    <label class='form-label' for="description">Описание:</label>
+                                    <input name="description" class="form-control" type="text" value="">
+                                    
+                                    <label class='form-label' for="category_id">
+                                            <div class="dropdown">
+                                                <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Типы товаров:
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    {% for category in categories %}
+                                                    <li>{{category.id}} - {{category.name}}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </label>
+                                    <input name="category_id" class="form-control" min='1' max='5' type="number" value="1">
+                                </h4>
+                            </div>
+                            <div class="card-footer text-center">
+                                <input type='submit' value='Создать' class='form-control btn btn-outline-primary'>
+                            </div>
+                        </div>
+                    </form> 
+                    <br>
+                </div>
+                {#Создание новой категори#}
+                <div class="col-lg-8 col-md-10 mb-6">
+                    <div class='card h-100'>
+                        <form method="post" action="{{url_for('create_product_category')}}">
+                                <h4 class="card-title">
+                                    <label class='form-label' for="name">Новая категория:</label>
+                                    <input name="name" class="form-control" type="text" value=''>
+                                </h4>
+                                <br>    
+                                <input type='submit' value='Создать' class='form-control btn btn-outline-primary'>
+                        </form>
+                    </div>
+                </div>
+                <br><br>
+                <div class="col-lg-8 col-md-10 mb-6">
+                    <div class='card h-100'>
+                        <form method="post" action="{{url_for('delete_product_category')}}">
+                            <h4 class="card-title">
+                                <label class='form-label' for="id">Удалить категорию:</label>
+                                <input name="id" class="form-control" min={{ categories[0].id }} max={{ categories[-1].id }} type="number" value=''>
+                            </h4>
+                            <br>    
+                            <input type='submit' value='Удалить' class='form-control btn btn-outline-primary'>
+                        </form>
+                    </div>
+                </div>
+                <br><br>
+                {% for product in products %}
+                {# Изменять + удалять товар#}
+                <div class="col-lg-8 col-md-10 mb-4">
+                        <form method="post" action="{{ url_for('change_product_info', id=product.id) }}" enctype='multipart/form-data'>
+                        <div class="card h-100">
+                            <img class="card-img-top"
+                                src={{ url_for('media', filename=product.img) }}
+                                alt=""
+                                height='100', width='200'>
+                            <div class="card-body">
+                                <h4 class="card-title">
+                                    <label class='form-label' for="name">Название:</label>
+                                    <input name="name" class="form-control" type="text" value="{{product.name}}">
+                                    
+                                    <label class='form-label' for="img">Загрузить картинку</label>
+                                    <input name='img' class='form-control' type='file'>
+                                </h4>
+                                <h5> 
+                                    <label class='form-label' for="price">Цена:</label>
+                                    <input name="price" min='0' step="0.01" class="form-control" type="number" value={{product.price}}>
+                                    
+                                    <label class='form-label' for="quantity">Кол-во товаров:</label>
+                                    <input name="quantity" min='0' class="form-control" type="number" value={{product.quantity}}>
+                                    
+                                    <label class='form-label' for="description">Описание:</label>
+                                    <input name="description" class="form-control" type="text" value="{{product.description}}">
+                                    
+                                    <label class='form-label' for="category_id">
+                                        <div class="dropdown">
+                                            <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Типы товаров:
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                {% for category in categories %}
+                                                <li>{{category.id}} - {{category.name}}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </label>
+                                    <input name="category_id" class="form-control" type="number" min='1' max='5' value="{{product.category_id}}">
+                                    
+                                </h5>
+                                
+                            </div>
+                            <div class="card-footer text-center">
+                                <input type='submit' value='Изменить' class='form-control'>
+                            </div>
+                            <div class="card-footer text-center">
+                                <a class="btn btn-primary btn-lg " href={{url_for('delete_product', id=product.id)}} role="button">Удалить</a>
+                            </div>
+                        </div>
+                        </form>
+                        <br>
+                        <br>
+                </div>
+                
+                {% endfor %}
+
+            {% else %}
+            
             <div class="row justify-content-center">
-              {% for product in products %}
+                {% if products %}
+                    {% for product in products %}
 
-                  <div class="col-lg-5 col-md-5 mb-4">
-                      <div class="card h-100">
-                          <a href="#">
-                              <img class="card-img-top"
-                                  src="{{ url_for('static', filename='media/' + product.img ) }}"
-                                  alt="">
-                          </a>
-                          <div class="card-body">
-                              <h4 class="card-title">
-                                  <p>{{ product.name }}</p>
-                              </h4>
-                              <h5>{{ product.price }} руб.</h5>
-                              <p class="card-text">{{ product.description }}</p>
-                          </div>
-                          <div class="card-footer text-center">
-                              <a class="btn btn-outline-success"
-                              href={{url_for('basket_product_add', product_id=product.id)}}>
-                                Добавить в корзину
-                              </a>
-                          </div>
-                      </div>
-                  </div>
+                            <div class="col-lg-5 col-md-5 mb-4">
+                                <div class="card h-100">
+                                    <a href="#">
+                                        <img class="card-img-top"
+                                            src="{{url_for('media', filename=product.img) }}"
+                                            alt="">
+                                    </a>
+                                    <div class="card-body">
+                                        <h4 class="card-title">
+                                            <p>{{ product.name }}</p>
+                                        </h4>
+                                        <h5>{{ product.price }} руб.</h5>
+                                        <p class="card-text">{{ product.description }}</p>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <a class="btn btn-outline-success"
+                                        href={{url_for('basket_product_add', product_id=product.id)}}>
+                                            Добавить в корзину
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
 
-              {% endfor %}
+                    {% endfor %}
+                {% else %}
+                
+                <div class='container'>
+                    <div class="row-md-6 text-center" id='content'>
+                        <h1>
+                            Нету товаров удовлетворяющих вашим запросам
+                        </h1> 
+                    </div>
+                </div>
+                <br>
+                {% endif %}
             </div>
 
-            {#<nav aria-label="Page navigation example">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>#}
+            {% endif %}
 
+        
         </div>
     </div>
 </div>

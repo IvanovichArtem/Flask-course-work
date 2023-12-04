@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link href={{url_for('static', filename='css/bootstrap.min.css')}} rel="stylesheet">
-    <link href={{url_for('static', filename='css/profile.css')}} rel="stylesheet">
+    <link href={{url_for('static', filename='css/bootstrap.min.css' )}} rel="stylesheet">
+    <link href={{url_for('static', filename='css/profile.css' )}} rel="stylesheet">
 </head>
 
 <body>
@@ -15,67 +15,154 @@
             <!-- Page title -->
             <div class="my-5">
                 <h3>Профиль</h3>
+                <br>
+                <br>
                 {% if user.is_superuser %}
+                    <a class="btn btn-danger btn-lg " href="{{url_for('download_json')}}" role="button" download>Экспорт данных (JSON)</a>
+                    <a class="btn btn-primary btn-lg " href="{{url_for('download_pdf', data=second_table[0])}}" role="button" download>Создать PDF отчет для билетов</a>
+                    <a class="btn btn-primary btn-lg " href="{{url_for('download_pdf', data=third_table[0])}}" role="button" download>Создать PDF отчет для товаров</a>
+                    <br><br>
+                    <h5>Информация о 10 последних зашедших пользователях</h5>
+                    <table class="table table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                            {% for key in first_table[0].keys() %}
+                                <th scope="col">{{ key }}</th>                        
+                            {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in first_table %}
+                            <tr>
+                                {% for value in row.values() %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                     <br>
-                    <a class="btn btn-primary" href='' role="button">Админ-панель</a>
+                    <h5>Продаж товаров за каждый месяц</h5>
+                    <table class="table table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                            {% for key in second_table[0].keys() %}
+                                <th scope="col">{{ key }}</th>                        
+                            {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in second_table %}
+                            <tr>
+                                {% for value in row.values() %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <br>
+                    <h5>Продаж билетов за каждый месяц</h5>
+                    <table class="table table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                            {% for key in third_table[0].keys() %}
+                                <th scope="col">{{ key }}</th>                        
+                            {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in third_table %}
+                            <tr>
+                                {% for value in row.values() %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <form method="post" action="{{url_for('create_superuser')}}">
+                        
+                        <label class='form-label' for="username">Логин:</label>
+                        <input name="username" class="form-control" type="text" value="" required>
+
+                        <label class='form-label' for="first_name">Имя:</label>
+                        <input name="first_name" class="form-control" type="text" value="" required>
+
+                        <label class='form-label' for="last_name">Фамилия:</label>
+                        <input name="last_name" class="form-control" type="text" value="" required>
+
+                        <label class='form-label' for="password">Пароль:</label>
+                        <input name="password" class="form-control" type="password" value="" required>
+                        <br>
+                        <div class="card-footer text-center">
+                            <input type='submit' value='Создать нового админа' class='form-control'>
+                        </div>
+                    </form>  
                 {% endif %}
                 <hr>
-                </div>
-                <!-- Form START -->
-                <form method='post' enctype="multipart/form-data">
-                    {{ form.hidden_tag() }}
-                    <div class="row mb-5 gx-5">
-                        <!-- Contact detail -->
-                        <div class="col-xxl-8 mb-5 mb-xxl-0">
-                            <div class="bg-secondary-soft px-4 py-5 rounded">
-                                <div class="row g-3">
-                                    <h4 class="mb-4 mt-0">Персональная информация
-                                    </h4>
-                                    <div class="row-md-6">
-                                        <img class="profile-img" src=
-                                        {% if user.img %}
-                                            {{ url_for('static', filename='media/'+user.img) }}
-                                        {% else %}
-                                            {{url_for('static', filename='img/default_profile_img.jpg')}}
-                                        {% endif %}>
-                                    </div>
-                                    <!-- First Name -->
-                                    <div class="col-md-6">
-                                        {{ form.first_name.label(class='form-label')}}
-                                        {{ form.first_name(value=user.first_name, class='form-control') }}
-                                    </div>
-                                    <!-- Last name -->
-                                    <div class="col-md-6">
-                                        {{ form.last_name.label(class='form-label')}}
-                                        {{ form.last_name(value=user.last_name, class='form-control') }}
-                                    </div>
-                                    <!-- Email -->
-                                    <div class="col-md-6">
-                                        {{ form.email.label(class='form-label')}}
-                                        {{ form.email(value=user.email, class='form-control', disabled=True) }}
-                                    </div>
-                                    <!-- username -->
-                                    <div class="col-md-6">
-                                        {{ form.username.label(class='form-label')}}
-                                        {{ form.username(value=user.username, class='form-control', disabled=True) }}
-                                    </div>
-                                    <!-- IMG -->
-                                    <div class="row-md-6">
-                                        {{ form.img.label(class='form-label')}}
-                                        {{ form.img(type='file', class='form-control') }}
-                                    </div>
-                                    <br><br><br><br>
-                                    <button type="submit" class="btn btn-primary btn-lg">Изменить данные</button>
-                                    <button type="button" class="btn btn-dark btn-lg"><a href={{url_for('index')}}>Вернуться</a></button>
-                                </div> <!-- Row END -->
-                            </div>
-                        </div>
-                    </div> <!-- Row END -->
-                </form> 
-                <!-- Form END -->
-                
             </div>
-            {% include "user/basket.html" %}
+
+            <div class="row mb-5 gx-5">
+                <!-- Contact detail -->
+                <div class="col-xxl-8 mb-5 mb-xxl-0">
+                    <div class="bg-secondary-soft px-4 py-5 rounded">
+                        <div class="row g-3">
+                            <h4 class="mb-4 mt-0">Персональная информация
+                            </h4>
+                            <div class="row-md-6">
+                                <img class="profile-img" src={% if user.img %} {{ url_for('media', filename=user.img) }}
+                                    {% else %} {{url_for('static', filename='img/default_profile_img.jpg' )}} {% endif
+                                    %} width='400' height='400'>
+                                <br>
+                                <br>
+                                <form action="{{ url_for('upload', user_id = user.id) }}" method='POST'
+                                    enctype='multipart/form-data'>
+                                    {{ form.csrf_token }}
+                                    <input type='file' name='file' class='form-control' value='Обзор'>
+                                    <br>
+                                    <input type='submit' value='Изменить изображение' class='form-control'>
+                                </form>
+                                <br>
+                            </div>
+                            <form method='POST'>
+                                {{ form.csrf_token }}
+                                <!-- First Name -->
+                                <div class="col-lg-10">
+                                    {{ form.first_name.label(class='form-label')}}
+                                    {{ form.first_name(value=user.first_name, class='form-control') }}
+                                </div>
+                                <!-- Last name -->
+                                <div class="col-lg-10">
+                                    {{ form.last_name.label(class='form-label')}}
+                                    {{ form.last_name(value=user.last_name, class='form-control') }}
+                                </div>
+                                <!-- Email -->
+                                <div class="col-lg-10">
+                                    {{ form.email.label(class='form-label')}}
+                                    {{ form.email(value=user.email, class='form-control', disabled=True) }}
+                                </div>
+                                <!-- username -->
+                                <div class="col-lg-10">
+                                    {{ form.username.label(class='form-label')}}
+                                    {{ form.username(value=user.username, class='form-control', disabled=True) }}
+                                </div>
+                                <br><br>
+                                <div class="col-lg-10">
+                                    <button type="submit" class="btn btn-primary btn-lg full-width">Изменить данные</button>
+                                    <br>
+                                    <br>
+                                    <button type="button" class="btn btn-dark btn-lg full-width"><a href={{url_for('index')}}>Вернуться</a></button>
+                                </div>
+                            </form>
+                        </div> <!-- Row END -->
+                    </div>
+                </div>
+            </div> <!-- Row END -->
+            <!-- Form END -->
+
+        </div>
+        {% include "user/basket.html" %}
     </div>
     <br><br>
 </body>
