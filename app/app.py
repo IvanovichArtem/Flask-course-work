@@ -11,18 +11,24 @@ from flask import (
 from form import LoginForm, ProfileForm, RegistrationForm, ProductBuyForm
 from flask_session import Session
 from datetime import date, datetime
-from db import db
+from db.db import Database
 from tickets.ticket import create_tickets
 from tickets.send import send_email, del_files
 import os
 from datetime import date, datetime
-from tables import *
 import ast
+from passlib.hash import pbkdf2_sha256
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
 Session(app)
-db.conn.init_app(app)
+database = Database(
+    db_name="flask_museum",
+    user="artem",
+    password="135246Art",
+    host="34.118.21.179",
+    port=5432,
+)
 
 
 @app.route("/media/<path:filename>")
@@ -33,13 +39,13 @@ def media(filename):
 
 @app.route("/admin/download_json")
 def download_json():
-    return send_file("media/db/" + db.create_json(), as_attachment=True)
+    return send_file("media/db/" + database.create_json(), as_attachment=True)
 
 
 @app.route("/admin/download_pdf/<data>")
 def download_pdf(data):
     data = ast.literal_eval(data)
-    name = db.create_pdf(data)
+    name = database.create_pdf(data)
     return send_file("media/pdf/" + name, as_attachment=True)
 
 
@@ -67,14 +73,14 @@ def exhibitions():
     if session["is_superuser"]:
         context = {
             "title": "Выставки",
-            "exhibitions": db.filter(
+            "exhibitions": database.filter(
                 table_name="catalog_exhibition", type_id=1
             ),
         }
     else:
         context = {
             "title": "Выставки",
-            "exhibitions": db.query(
+            "exhibitions": database.query(
                 "SELECT * FROM catalog_exhibition WHERE (type_id = 1) AND (CURRENT_DATE BETWEEN start_date AND end_date) AND (tickets_quantity > 0)",
                 True,
             ),
@@ -87,12 +93,14 @@ def events():
     if session["is_superuser"]:
         context = {
             "title": "События",
-            "events": db.filter(table_name="catalog_exhibition", type_id=2),
+            "events": database.filter(
+                table_name="catalog_exhibition", type_id=2
+            ),
         }
     else:
         context = {
             "title": "События",
-            "events": db.query(
+            "events": database.query(
                 "SELECT * FROM catalog_exhibition WHERE (type_id = 2) AND (CURRENT_DATE BETWEEN start_date AND end_date) AND (tickets_quantity > 0)",
                 True,
             ),
@@ -107,19 +115,21 @@ def change_exhibit_info(id):
     if uppload_file.filename != "":
         os.remove(
             "media/"
-            + db.get(table_name="catalog_exhibition", id=id, name="img")
+            + database.get(table_name="catalog_exhibition", id=id, name="img")
         )
         filepath = "media/exhibition_images/"
         uppload_file.save(os.path.join(filepath, uppload_file.filename))
         form["img"] = "exhibition_images/" + uppload_file.filename
 
-    db.update(table_name="catalog_exhibition", key="id", key_value=id, **form)
+    database.update(
+        table_name="catalog_exhibition", key="id", key_value=id, **form
+    )
     return redirect(request.referrer)
 
 
 @app.route("/delete_exhibit/<int:id>")
 def delete_exhibit(id):
-    db.delete(table_name="catalog_exhibition", condition=f"id = {id}")
+    database.delete(table_name="catalog_exhibition", condition=f"id = {id}")
     return redirect(request.referrer)
 
 
@@ -133,7 +143,7 @@ def create_exhibit():
         form["img"] = "exhibition_images/" + uppload_file.filename
     else:
         form["img"] = ""
-    db.create(table_name="catalog_exhibition", **form)
+    database.create(table_name="catalog_exhibition", **form)
     return redirect(request.referrer)
 
 
@@ -145,19 +155,23 @@ def login():
         if not form.validate():
             print("Invalid login form")
         else:
-            user = db.filter(
+            user = database.filter(
                 table_name="user_user", username=form.data["username"]
             )[0]
             if user != []:
                 # Checking password
-                if db.verify_password(form.data["password"], user["password"]):
+                if pbkdf2_sha256.verify(
+                    form.data["password"], user["password"]
+                ):
                     session["logged_in"] = True
                     session["username"] = form.data["username"]
                     session["is_superuser"] = user["is_superuser"]
-                    session["user_id"] = db.get_user_id(
+                    session["user_id"] = database.get_user_id(
                         table_name="user_user", username=form.data["username"]
                     )
-                    db.last_login(table_name="user_user", id=session["user_id"])
+                    database.last_login(
+                        table_name="user_user", id=session["user_id"]
+                    )
                     return redirect(url_for("index"))
                 else:
                     return render_template(
@@ -186,18 +200,18 @@ def registration():
                 errors=[elem[0] for elem in form.errors.values()],
             )
         else:
-            if db.exists("user_user", username=form.data["username"]):
+            if database.exists("user_user", username=form.data["username"]):
                 return render_template(
                     "user/registration.html",
                     form=form,
                     error="Существет пользователь с таким логином",
                 )
             else:
-                db.create(
+                database.create(
                     table_name="user_user",
                     username=form.data["username"],
                     last_name=form.data["last_name"],
-                    password=db.code(form.data["password1"]),
+                    password=database.code(form.data["password1"]),
                     is_superuser=False,
                     date_joined=f"{datetime.now()}",
                     first_name=form.data["first_name"],
@@ -206,7 +220,7 @@ def registration():
                 session["logged_in"] = True
                 session["is_superuser"] = False
                 session["username"] = form.data["username"]
-                session["user_id"] = db.get_user_id(
+                session["user_id"] = database.get_user_id(
                     "user_user", username=form.data["username"]
                 )
                 return redirect(url_for("index"))
@@ -216,13 +230,13 @@ def registration():
 
 @app.route("/upload/<int:user_id>", methods=["POST"])
 def upload(user_id):
-    user = db.filter(table_name="user_user", id=user_id)[0]
+    user = database.filter(table_name="user_user", id=user_id)[0]
     uppload_file = request.files["file"]
     file_path = "media/users_images/"
     uppload_file.save(os.path.join(file_path, uppload_file.filename))
     if user["img"] != "":
         os.remove("media/" + user["img"])
-    db.update(
+    database.update(
         table_name="user_user",
         key="id",
         key_value=user["id"],
@@ -234,8 +248,10 @@ def upload(user_id):
 @app.route("/user/profile", methods=["GET", "POST"])
 def profile():
     form = ProfileForm(request.form)
-    user = db.filter(table_name="user_user", username=session["username"])[0]
-    baskets = db.query(
+    user = database.filter(
+        table_name="user_user", username=session["username"]
+    )[0]
+    baskets = database.query(
         f"""SELECT cb.id, cb.quantity, ce.name,
                         ce.description, ce.price
                          FROM catalog_basket cb
@@ -254,7 +270,7 @@ def profile():
             "last_name": form.data["last_name"],
         }
 
-        db.update(
+        database.update(
             table_name="user_user",
             key="id",
             key_value=user["id"],
@@ -263,9 +279,9 @@ def profile():
         return redirect("profile")
     else:
         if session["is_superuser"]:
-            first_table = get_last_users()
-            second_table = get_products_order_count_by_month()
-            third_table = get_exhibition_order_count_by_month()
+            first_table = database.get_last_users()
+            second_table = database.get_products_order_count_by_month()
+            third_table = database.get_exhibition_order_count_by_month()
             return render_template(
                 "user/profile.html",
                 form=form,
@@ -293,9 +309,10 @@ def profile():
 @app.route("/admin/create_superuser", methods=["POST"])
 def create_superuser():
     form = dict(request.form)
-    form["password"] = db.code(form["password"])
+    print(form)
+    form["password"] = database.code(form["password"])
     now = datetime.now()
-    db.create(
+    database.create(
         table_name="user_user",
         **form,
         is_superuser=True,
@@ -320,23 +337,23 @@ def logout():
 @app.route("/user/basket_add/<int:exhibit_id>")
 def basket_add(exhibit_id):
     if session["logged_in"]:
-        exhibition = db.filter(table_name="catalog_exhibition", id=exhibit_id)[
-            0
-        ]
-        basket = db.filter(
+        exhibition = database.filter(
+            table_name="catalog_exhibition", id=exhibit_id
+        )[0]
+        basket = database.filter(
             table_name="catalog_basket",
             user_id=session["user_id"],
             exhibition_id=exhibition["id"],
         )
         if basket == []:
-            db.create(
+            database.create(
                 table_name="catalog_basket",
                 quantity=1,
                 exhibition_id=exhibition["id"],
                 user_id=session["user_id"],
             )
         else:
-            db.update(
+            database.update(
                 table_name="catalog_basket",
                 key="id",
                 key_value=basket[0]["id"],
@@ -350,7 +367,7 @@ def basket_add(exhibit_id):
 
 @app.route("/user/basket_delete/<int:basket_id>")
 def delete_basket(basket_id):
-    db.delete(table_name="catalog_basket", condition=f"id = {basket_id}")
+    database.delete(table_name="catalog_basket", condition=f"id = {basket_id}")
     return redirect(request.referrer)
 
 
@@ -360,33 +377,34 @@ def change_product_info(id):
     form = dict(request.form)
     if uppload_file.filename != "":
         os.remove(
-            "media/" + db.get(table_name="shop_product", id=id, name="img")
+            "media/"
+            + database.get(table_name="shop_product", id=id, name="img")
         )
         filepath = "media/product_images/"
         uppload_file.save(os.path.join(filepath, uppload_file.filename))
         form["img"] = "product_images/" + uppload_file.filename
 
-    db.update(table_name="shop_product", key="id", key_value=id, **form)
+    database.update(table_name="shop_product", key="id", key_value=id, **form)
     return redirect(request.referrer)
 
 
 @app.route("/create_product_category", methods=["POST"])
 def create_product_category():
     form = request.form
-    db.create(table_name="shop_producttype", **form)
+    database.create(table_name="shop_producttype", **form)
     return redirect(request.referrer)
 
 
 @app.route("/delete_product_category", methods=["POST"])
 def delete_product_category():
     id = request.form["id"]
-    db.delete(table_name="shop_producttype", condition=f"id = {id}")
+    database.delete(table_name="shop_producttype", condition=f"id = {id}")
     return redirect(request.referrer)
 
 
 @app.route("/delete_product/<int:id>")
 def delete_product(id):
-    db.delete(table_name="shop_product", condition=f"id = {id}")
+    database.delete(table_name="shop_product", condition=f"id = {id}")
     return redirect(request.referrer)
 
 
@@ -400,13 +418,13 @@ def create_product():
         form["img"] = "product_images/" + uppload_file.filename
     else:
         form["img"] = ""
-    db.create(table_name="shop_product", **form)
+    database.create(table_name="shop_product", **form)
     return redirect(request.referrer)
 
 
 @app.route("/shop")
 def shop():
-    categories = db.all(table_name="shop_producttype")
+    categories = database.all(table_name="shop_producttype")
     form = request.args
     search_text = form.getlist("search_text")
     category_ids = form.getlist("category_ids")
@@ -426,9 +444,9 @@ def shop():
 
         if conditions:
             query += " AND ".join(conditions)
-        products = db.query(query, True)
+        products = database.query(query, True)
     else:
-        products = db.all(table_name="shop_product")
+        products = database.all(table_name="shop_product")
     return render_template(
         "shop/shop.html",
         title=f"Магазин",
@@ -446,21 +464,21 @@ def shop_about():
 def basket_product_add(product_id):
     if not session["logged_in"]:
         return redirect(url_for("login"))
-    product = db.filter(table_name="shop_product", id=product_id)[0]
-    basket = db.filter(
+    product = database.filter(table_name="shop_product", id=product_id)[0]
+    basket = database.filter(
         table_name="shop_basket",
         user_id=session["user_id"],
         product_id=product["id"],
     )
     if basket == []:
-        db.create(
+        database.create(
             table_name="shop_basket",
             quantity=1,
             product_id=product["id"],
             user_id=session["user_id"],
         )
     else:
-        db.update(
+        database.update(
             table_name="shop_basket",
             key="id",
             key_value=basket[0]["id"],
@@ -474,8 +492,10 @@ def basket_product_add(product_id):
 def shop_basket():
     if not session["logged_in"]:
         return redirect(url_for("login"))
-    user = db.filter(table_name="user_user", username=session["username"])[0]
-    baskets = db.query(
+    user = database.filter(
+        table_name="user_user", username=session["username"]
+    )[0]
+    baskets = database.query(
         f"""SELECT sb.id, sb.quantity, sp.name, sp.description,
         sp.price FROM shop_basket
         sb JOIN shop_product sp
@@ -490,10 +510,10 @@ def shop_basket():
     )
     if request.method == "POST":
         for basket in baskets:
-            db.insert(
+            database.insert(
                 f"INSERT INTO order_products(user_id, product_id, quantity, order_date, delivery_date) VALUES ({user['id']}, {basket['id']}, {basket['quantity']}, '{(date.today())}',  '{form.data['take_date']}');"
             )
-            db.delete(
+            database.delete(
                 table_name="shop_basket", condition=f"id = {basket['id']}"
             )
         return redirect(url_for("shop_basket"))
@@ -510,35 +530,35 @@ def shop_basket():
 
 @app.route("/shop/basket_delete/<int:basket_id>")
 def basket_product_delete(basket_id):
-    db.delete(table_name="shop_basket", condition=f"id = {basket_id}")
+    database.delete(table_name="shop_basket", condition=f"id = {basket_id}")
     return redirect(request.referrer)
 
 
 @app.route("/user/checkout/<int:user_id>")
 def checkout_exhbibition(user_id):
     """INSERT INTO order_exhibition(user_id,exhibition_id,quantity,book_date) VALUES(14,1,0,'2023-11-16');"""
-    user = db.filter(table_name="user_user", id=user_id)[0]
-    baskets = db.filter(table_name="catalog_basket", user_id=user["id"])
+    user = database.filter(table_name="user_user", id=user_id)[0]
+    baskets = database.filter(table_name="catalog_basket", user_id=user["id"])
     for basket in baskets:
-        if not db.exists(
+        if not database.exists(
             table_name="order_exhibition", exhibition_id=basket["exhibition_id"]
         ):
             query = f"""INSERT INTO order_exhibition(user_id, exhibition_id, quantity, book_date) VALUES({user['id']}, {basket['exhibition_id']},{basket['quantity']}, '{date.today()}')"""
-            db.insert(query)
+            database.insert(query)
             print("\n" * 50)
         else:
-            db.query(
+            database.query(
                 f"UPDATE order_exhibition SET quantity = quantity + {basket['quantity']} WHERE exhibition_id = {basket['exhibition_id']}"
             )
-        db.query(
+        database.query(
             f"UPDATE catalog_exhibition SET tickets_quantity = tickets_quantity - {basket['quantity']} WHERE id = {basket['exhibition_id']}"
         )
-        db.delete(
+        database.delete(
             table_name="catalog_basket",
             condition=f"exhibition_id = {basket['exhibition_id']}",
         )
         # Create a ticket
-        order = db.query(
+        order = database.query(
             str(
                 """SELECT oe.id, ce.name, ce.start_date, ce.end_date, oe.quantity,
                  (oe.quantity*ce.price) as total_price FROM order_exhibition as oe
@@ -568,4 +588,4 @@ def forgot_password():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
